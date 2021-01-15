@@ -1,6 +1,6 @@
 {
   "name": "@sampension/react-native-sensitive-info",
-  "version": "6.0.0-alpha.9",
+  "version": "6.0.0-alpha.9.sp",
   "main": "build/index.js",
   "module": "build/index.es.js",
   "jsnext:main": "build/index.es.js",
