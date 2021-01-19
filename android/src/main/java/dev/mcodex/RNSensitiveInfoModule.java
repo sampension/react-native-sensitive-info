@@ -73,6 +73,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
     private static final byte[] FIXED_IV = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1};
     private static final String KEY_ALIAS = "MySharedPreferenceKeyAlias";
     private static final String KEY_ALIAS_AES = "MyAesKeyAlias";
+    private static final String KEY_AES_BIOMETRIC = "MyAesKeyAliasBiometric";
 
     private FingerprintManager mFingerprintManager;
     private KeyStore mKeyStore;
@@ -325,7 +326,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
     }
 
 
-    private void showDialog(final HashMap strings, final BiometricPrompt.AuthenticationCallback callback) {
+    private void showDialog(final HashMap strings, final BiometricPrompt.AuthenticationCallback callback, final BiometricPrompt.CryptoObject cryptoObject) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
 
             UiThreadUtil.runOnUiThread(
@@ -350,7 +351,11 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                                         .setDescription(strings.containsKey("description") ? strings.get("description").toString() : null)
                                         .setTitle(strings.containsKey("header") ? strings.get("header").toString() : "Unlock with your fingerprint")
                                         .build();
-                                biometricPrompt.authenticate(promptInfo);
+                                if (cryptoObject != null) {
+                                    biometricPrompt.authenticate(promptInfo, cryptoObject);
+                                } else {
+                                    biometricPrompt.authenticate(promptInfo);
+                                }
                             } catch (Exception e) {
                                 throw e;
                             }
@@ -376,7 +381,6 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
     }
 
     private void prepareKey() throws Exception {
-
         KeyGenerator keyGenerator = KeyGenerator.getInstance(
                 KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE_PROVIDER);
 
@@ -392,6 +396,20 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                 .setUserAuthenticationRequired(true)
                 // We set the key to be available for 30 seconds after unlock to have the ability to write data without extra Biometirc prompts
                 .setUserAuthenticationValidityDurationSeconds(60 * 30);
+
+        keyGenerator.init(builder.build());
+        keyGenerator.generateKey();
+
+        // NOTE: preparing a mock key for detecting fingerprint changes
+        builder = new KeyGenParameterSpec.Builder(
+                KEY_AES_BIOMETRIC,
+                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT);
+
+        builder.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                .setKeySize(256)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                // forces user authentication with fingerprint
+                .setUserAuthenticationRequired(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             try {
@@ -449,7 +467,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                         }
                     }
 
-                    showDialog(strings, new PutExtraWithAESCallback());
+                    showDialog(strings, new PutExtraWithAESCallback(), null);
                 } catch (InvalidKeyException | UnrecoverableKeyException e) {
                     try {
                         mKeyStore.deleteEntry(KEY_ALIAS_AES);
@@ -481,6 +499,10 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
         return;
     }
 
+    /**
+     *  NOTE: In order to support our use-case with the current IAM module we make a
+     *  trick where we store 2 keys one of which is used just for detection of changes in biometric data
+     */
     private void decryptWithAes(final String encrypted, final boolean showModal, final HashMap strings, final Promise pm, final boolean authenticated) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M
                 && hasSetupBiometricCredential()) {
@@ -512,13 +534,19 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                 }
 
                 if (!authenticated) {
-                    showDialog(strings, new DecryptWithAesCallback());
+                    byte[] iv = Base64.decode(inputs[0], Base64.DEFAULT);
+                    Cipher cipher = Cipher.getInstance(AES_DEFAULT_TRANSFORMATION);
+                    SecretKey secretKeyBiometric = (SecretKey) mKeyStore.getKey(KEY_AES_BIOMETRIC, null);
+                    cipher.init(Cipher.DECRYPT_MODE, secretKeyBiometric, new IvParameterSpec(iv));
+                    showDialog(strings, new DecryptWithAesCallback(), new BiometricPrompt.CryptoObject(cipher));
                 } else {
                     byte[] iv = Base64.decode(inputs[0], Base64.DEFAULT);
                     byte[] cipherBytes = Base64.decode(inputs[1], Base64.DEFAULT);
 
+
                     SecretKey secretKey = (SecretKey) mKeyStore.getKey(KEY_ALIAS_AES, null);
                     Cipher cipher = Cipher.getInstance(AES_DEFAULT_TRANSFORMATION);
+
                     cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
 
                     SecretKeyFactory factory = SecretKeyFactory.getInstance(secretKey.getAlgorithm(), ANDROID_KEYSTORE_PROVIDER);
