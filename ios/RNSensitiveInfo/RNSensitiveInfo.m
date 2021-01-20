@@ -130,6 +130,8 @@ RCT_EXPORT_METHOD(setItem:(NSString*)key value:(NSString*)value options:(NSDicti
     [query setValue: valueData forKey: kSecValueData];
 
     if([RCTConvert BOOL:options[@"touchID"]]){
+        LAContext *context = [[LAContext alloc] init];
+        context.touchIDAuthenticationAllowableReuseDuration = 60;
         CFStringRef kSecAccessControlValue = convertkSecAccessControl([RCTConvert NSString:options[@"kSecAccessControl"]]);
         SecAccessControlRef sac = SecAccessControlCreateWithFlags(kCFAllocatorDefault, kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly, kSecAccessControlValue, NULL);
         [query setValue:(__bridge id _Nullable)(sac) forKey:(NSString *)kSecAttrAccessControl];
@@ -186,7 +188,7 @@ RCT_EXPORT_METHOD(getItem:(NSString *)key options:(NSDictionary *)options resolv
         LAContext *context = [[LAContext alloc] init];
         NSString *kLocalizedFallbackTitle = [RCTConvert NSString:options[@"kLocalizedFallbackTitle"]];
         context.localizedFallbackTitle = kLocalizedFallbackTitle ? kLocalizedFallbackTitle : @"";
-        context.touchIDAuthenticationAllowableReuseDuration = 1;
+        context.touchIDAuthenticationAllowableReuseDuration = 60;
         
         [query setValue:context forKey:(NSString *)kSecUseAuthenticationContext];
         
@@ -385,6 +387,7 @@ RCT_EXPORT_METHOD(isSensorAvailable:(RCTPromiseResolveBlock)resolve rejecter:(RC
 {
 #if !TARGET_OS_TV
     LAContext *context = [[LAContext alloc] init];
+    context.touchIDAuthenticationAllowableReuseDuration = 60;
     
     NSError *evaluationError = nil;
     if ([context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&evaluationError]) {
