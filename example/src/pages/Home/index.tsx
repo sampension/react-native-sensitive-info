@@ -89,6 +89,26 @@ const Home: React.FC = () => {
 
       Alert.alert('Data stored', data);
     } catch (ex) {
+      console.log(ex)
+      Alert.alert('Error', ex.message);
+    }
+  }, []);
+
+  const removeTouchIDItem = useCallback(async () => {
+    const deviceHasSensor = await SInfo.isSensorAvailable();
+
+    if (!deviceHasSensor) {
+      return Alert.alert('No sensor found');
+    }
+
+    try {
+      const data = await SInfo.deleteItem('touchIdItem', {
+        sharedPreferencesName: 'exampleApp',
+        keychainService: 'exampleApp',
+      });
+
+      Alert.alert('Item removed');
+    } catch (ex) {
       Alert.alert('Error', ex.message);
     }
   }, []);
@@ -128,10 +148,9 @@ const Home: React.FC = () => {
         title="Add item using TouchID"
         onPress={handleSetItemUsingTouchIDOnPress}
       />
-
       <Button title="Get TouchID Data" onPress={getTouchIDItem} />
       <Button title="Has TouchID Data" onPress={hasTouchIDItem} />
-
+      <Button title="Remove TouchID Data" onPress={removeTouchIDItem} />
       <Text>{logText}</Text>
     </SafeAreaView>
   );
