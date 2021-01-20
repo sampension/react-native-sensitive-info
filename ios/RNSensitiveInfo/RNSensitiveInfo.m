@@ -186,6 +186,7 @@ RCT_EXPORT_METHOD(getItem:(NSString *)key options:(NSDictionary *)options resolv
     
     if([RCTConvert BOOL:options[@"touchID"]]){
         LAContext *context = [[LAContext alloc] init];
+        
         NSString *kLocalizedFallbackTitle = [RCTConvert NSString:options[@"kLocalizedFallbackTitle"]];
         context.localizedFallbackTitle = kLocalizedFallbackTitle ? kLocalizedFallbackTitle : @"";
         context.touchIDAuthenticationAllowableReuseDuration = 60;
@@ -211,8 +212,8 @@ RCT_EXPORT_METHOD(getItem:(NSString *)key options:(NSDictionary *)options resolv
                                   }
                                   return;
                               }
-                              
-                              [self getItemWithQuery:query resolver:resolve rejecter:reject];
+            
+                            [self getItemWithQuery:query resolver:resolve rejecter:reject];
                           }];
         return;
     }
@@ -387,7 +388,6 @@ RCT_EXPORT_METHOD(isSensorAvailable:(RCTPromiseResolveBlock)resolve rejecter:(RC
 {
 #if !TARGET_OS_TV
     LAContext *context = [[LAContext alloc] init];
-    context.touchIDAuthenticationAllowableReuseDuration = 60;
     
     NSError *evaluationError = nil;
     if ([context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&evaluationError]) {
