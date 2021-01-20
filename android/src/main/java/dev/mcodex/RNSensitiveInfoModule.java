@@ -143,7 +143,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
         try {
             prepareKey();
         } catch (Exception e) {
-            pm.reject(e);
+            pm.reject(AppConstants.E_BIOMETRICS_INVALIDATED, e);
         }
     }
 
@@ -473,9 +473,9 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                         mKeyStore.deleteEntry(KEY_ALIAS_AES);
                         prepareKey();
                     } catch (Exception keyResetError) {
-                        pm.reject(keyResetError);
+                        pm.reject(AppConstants.E_BIOMETRICS_INVALIDATED, keyResetError);
                     }
-                    pm.reject(e);
+                    pm.reject(AppConstants.KM_UNABLE_TO_DECRYPT_KEY, e);
                 } catch (IllegalBlockSizeException e){
                     if(e.getCause() != null && e.getCause().getMessage().contains("Key user not authenticated")) {
                         try {
@@ -486,12 +486,12 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                             pm.reject(keyResetError);
                         }
                     } else {
-                        pm.reject(e);
+                        pm.reject(AppConstants.KM_UNABLE_TO_DECRYPT_KEY, e);
                     }
                 } catch (SecurityException e) {
-                    pm.reject(e);
+                    pm.reject(AppConstants.E_SECURITY_VIOLATION, e);
                 } catch (Exception e) {
-                    pm.reject(e);
+                    pm.reject(AppConstants.E_INIT_FAILURE, e);
                 }
         } else {
             pm.reject(AppConstants.E_BIOMETRIC_NOT_SUPPORTED, "Biometrics not supported");
@@ -509,7 +509,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
 
             String[] inputs = encrypted.split(DELIMITER);
             if (inputs.length < 2) {
-                pm.reject("DecryptionFailed", "DecryptionFailed");
+                pm.reject(AppConstants.KM_UNABLE_TO_DECRYPT_KEY, "DecryptionFailed");
             }
 
             try {
@@ -560,9 +560,9 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                     mKeyStore.deleteEntry(KEY_ALIAS_AES);
                     prepareKey();
                 } catch (Exception keyResetError) {
-                    pm.reject(keyResetError);
+                    pm.reject(AppConstants.KM_UNABLE_TO_DECRYPT_KEY, keyResetError);
                 }
-                pm.reject(e);
+                pm.reject(AppConstants.E_BIOMETRICS_INVALIDATED, e);
             } catch (IllegalBlockSizeException e){
                 if(e.getCause() != null && e.getCause().getMessage().contains("Key user not authenticated")) {
                     try {
@@ -570,18 +570,18 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                         prepareKey();
                         pm.reject(AppConstants.KM_ERROR_KEY_USER_NOT_AUTHENTICATED, e.getCause().getMessage());
                     } catch (Exception keyResetError) {
-                        pm.reject(keyResetError);
+                        pm.reject(AppConstants.KM_UNABLE_TO_DECRYPT_KEY, keyResetError);
                     }
                 } else {
-                    pm.reject(e);
+                    pm.reject(AppConstants.E_BIOMETRICS_INVALIDATED, e);
                 }
             } catch (BadPaddingException e){
                 Log.d("RNSensitiveInfo", "Biometric key invalid");
                 pm.reject(AppConstants.E_BIOMETRICS_INVALIDATED, e.getCause().getMessage());
             } catch (SecurityException e) {
-                pm.reject(e);
+                pm.reject(AppConstants.E_SECURITY_VIOLATION, e);
             } catch (Exception e) {
-                pm.reject(e);
+                pm.reject(AppConstants.E_INIT_FAILURE, e);
             }
         } else {
             pm.reject(AppConstants.E_BIOMETRIC_NOT_SUPPORTED, "Biometrics not supported");
