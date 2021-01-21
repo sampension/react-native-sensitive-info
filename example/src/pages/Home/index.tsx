@@ -33,9 +33,15 @@ const Home: React.FC = () => {
         {
           sharedPreferencesName: 'exampleApp',
           keychainService: 'exampleApp',
-          kSecAccessControl: 'kSecAccessControlBiometryAny', // Enabling FaceID
-          touchID: true,
-          showModal: true,
+          kSecAttrAccessible: 'kSecAttrAccessibleWhenUnlockedThisDeviceOnly',
+          kSecAttrSynchronizable: false,
+          /*
+           NOTE: These options offer way more in terms of security, but we are not using
+           them because it will prompt for biometrics twice during OAuth token refresh flow
+          */
+          // kSecAccessControl: 'kSecAccessControlBiometryCurrentSet'
+          // touchID: true,
+          // showModal: true,
         },
       );
 
@@ -85,6 +91,7 @@ const Home: React.FC = () => {
         },
         kSecUseOperationPrompt:
           'We need your permission to retrieve encrypted data',
+        kLocalizedFallbackTitle: 'Please provide a passcode',
       });
 
       Alert.alert('Data stored', data);
