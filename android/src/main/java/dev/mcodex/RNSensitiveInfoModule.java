@@ -298,23 +298,23 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                     KeyGenerator keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE_PROVIDER);
                     keyGenerator.init(
                             new KeyGenParameterSpec.Builder(KEY_ALIAS,
-                                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
-                                    .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                                    .setRandomizedEncryptionRequired(false)
-                                    .build());
+                                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                                .setRandomizedEncryptionRequired(false)
+                                .build());
                     keyGenerator.generateKey();
                 } else {
                     Calendar notBefore = Calendar.getInstance();
                     Calendar notAfter = Calendar.getInstance();
                     notAfter.add(Calendar.YEAR, 10);
                     KeyPairGeneratorSpec spec = new KeyPairGeneratorSpec.Builder(getReactApplicationContext())
-                            .setAlias(KEY_ALIAS)
-                            .setSubject(new X500Principal("CN=" + KEY_ALIAS))
-                            .setSerialNumber(BigInteger.valueOf(1337))
-                            .setStartDate(notBefore.getTime())
-                            .setEndDate(notAfter.getTime())
-                            .build();
+                        .setAlias(KEY_ALIAS)
+                        .setSubject(new X500Principal("CN=" + KEY_ALIAS))
+                        .setSerialNumber(BigInteger.valueOf(1337))
+                        .setStartDate(notBefore.getTime())
+                        .setEndDate(notAfter.getTime())
+                        .build();
                     KeyPairGenerator kpGenerator = KeyPairGenerator.getInstance("RSA", ANDROID_KEYSTORE_PROVIDER);
                     kpGenerator.initialize(spec);
                     kpGenerator.generateKeyPair();
@@ -390,26 +390,26 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                 KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT);
 
         builder.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                .setKeySize(256)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-                // forces user authentication with fingerprint
-                .setUserAuthenticationRequired(true)
-                // We set the key to be available for 30 minutes after unlock to have the ability to write data without extra prompts
-                .setUserAuthenticationValidityDurationSeconds(60 * 30);
+            .setKeySize(256)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+            // forces user authentication with fingerprint
+            .setUserAuthenticationRequired(true)
+            // We set the key to be available for 30 minutes after unlock to have the ability to write data without extra prompts
+            .setUserAuthenticationValidityDurationSeconds(60 * 30);
 
         keyGenerator.init(builder.build());
         keyGenerator.generateKey();
 
         // NOTE: preparing a mock key for detecting fingerprint changes
         builder = new KeyGenParameterSpec.Builder(
-                KEY_AES_BIOMETRIC,
-                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT);
+            KEY_AES_BIOMETRIC,
+            KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT);
 
         builder.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                .setKeySize(256)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-                // forces user authentication with fingerprint
-                .setUserAuthenticationRequired(true);
+            .setKeySize(256)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+            // forces user authentication with fingerprint
+            .setUserAuthenticationRequired(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             try {
