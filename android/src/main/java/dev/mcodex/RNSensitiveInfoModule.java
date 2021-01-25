@@ -394,7 +394,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
                 // forces user authentication with fingerprint
                 .setUserAuthenticationRequired(true)
-                // We set the key to be available for 30 seconds after unlock to have the ability to write data without extra Biometirc prompts
+                // We set the key to be available for 30 minutes after unlock to have the ability to write data without extra prompts
                 .setUserAuthenticationValidityDurationSeconds(60 * 30);
 
         keyGenerator.init(builder.build());

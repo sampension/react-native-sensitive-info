@@ -1,6 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { View, Button, Alert, Text, SafeAreaView } from 'react-native';
+import { Button, Alert, Text, SafeAreaView, Platform } from 'react-native';
 import SInfo from 'react-native-sensitive-info';
+
+const isIOS = Platform.OS === 'ios';
 
 const Home: React.FC = () => {
   const handleAddUsingSetItemOnPress = useCallback(() => {
@@ -40,8 +42,8 @@ const Home: React.FC = () => {
            them because it will prompt for biometrics twice during OAuth token refresh flow
           */
           // kSecAccessControl: 'kSecAccessControlBiometryCurrentSet'
-          // touchID: true,
-          // showModal: true,
+          touchID: !isIOS,
+          showModal: !isIOS,
         },
       );
 
