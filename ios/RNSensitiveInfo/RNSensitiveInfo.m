@@ -216,8 +216,8 @@ RCT_EXPORT_METHOD(getItem:(NSString *)key options:(NSDictionary *)options resolv
                            NSData *oldDomainState = [defaults objectForKey:@"domainTouchID"];
                            NSData *domainState = [context evaluatedPolicyDomainState];
             
-                           // check for domain state changes and not nil (pincode fallback)
-                           if (![oldDomainState isEqual:domainState] && domainState != nil) {
+                           // check for domain state changes and not nil (in case of pincode fallback or fresh biometric setup)
+                           if (![oldDomainState isEqual:domainState] && domainState != nil && oldDomainState != nil) {
                                // save the domain state that will be loaded next time
                                oldDomainState = [context evaluatedPolicyDomainState];
                                [defaults setObject:oldDomainState forKey:@"domainTouchID"];
