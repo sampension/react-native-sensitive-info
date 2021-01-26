@@ -221,13 +221,17 @@ RCT_EXPORT_METHOD(getItem:(NSString *)key options:(NSDictionary *)options resolv
                                // save the domain state that will be loaded next time
                                oldDomainState = [context evaluatedPolicyDomainState];
                                [defaults setObject:oldDomainState forKey:@"domainTouchID"];
-                               [defaults synchronize];
                                // Delete key due to biometirc changes
                                OSStatus osStatus = SecItemDelete((__bridge CFDictionaryRef) query);
                                reject(nil, @"Biometric changes", nil);
                                return;
                            }
-            
+
+                           // we save the state in case of a fresh biometric setup
+                            if (oldDomainState == nil) {
+                                [defaults setObject:domainState forKey:@"domainTouchID"];
+                            }
+
                            [self getItemWithQuery:query resolver:resolve rejecter:reject];
                           }];
         return;
