@@ -1,7 +1,6 @@
 package dev.mcodex.RNSensitiveInfo;
 
 import com.facebook.react.ReactPackage;
-import com.facebook.react.bridge.JavaScriptModule;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.uimanager.ViewManager;
@@ -17,7 +16,7 @@ public class RNSensitiveInfoPackage implements ReactPackage {
             ReactApplicationContext reactContext) {
         List<NativeModule> modules = new ArrayList<>();
 
-        modules.add(new RNSensitiveInfoModule(reactContext));
+        modules.add(new dev.mcodex.RNSensitiveInfo.RNSensitiveInfoModule(reactContext));
 
         return modules;
     }
@@ -27,5 +26,4 @@ public class RNSensitiveInfoPackage implements ReactPackage {
             ReactApplicationContext reactContext) {
         return Collections.emptyList();
     }
-
 }

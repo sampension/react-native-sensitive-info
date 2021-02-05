@@ -385,9 +385,6 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                 KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE_PROVIDER);
 
         KeyGenParameterSpec.Builder builder = null;
-        builder = new KeyGenParameterSpec.Builder(
-                KEY_ALIAS_AES,
-                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT);
 
         builder.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
             .setKeySize(256)
@@ -411,15 +408,23 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
             // forces user authentication with fingerprint
             .setUserAuthenticationRequired(true);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            try {
-                builder.setInvalidatedByBiometricEnrollment(invalidateEnrollment);
-            } catch (Exception e) {
-                Log.d("RNSensitiveInfo", "Error setting setInvalidatedByBiometricEnrollment: " + e.getMessage());
+            builder.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                    .setKeySize(256)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                    // forces user authentication with fingerprint
+                    .setUserAuthenticationRequired(true);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                try {
+                    builder.setInvalidatedByBiometricEnrollment(invalidateEnrollment);
+                } catch (Exception e) {
+                    Log.d("RNSensitiveInfo", "Error setting setInvalidatedByBiometricEnrollment: " + e.getMessage());
+                }
             }
+
+            keyGenerator.init(builder.build());
         }
 
-        keyGenerator.init(builder.build());
         keyGenerator.generateKey();
     }
 
