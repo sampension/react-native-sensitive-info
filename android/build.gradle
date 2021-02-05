@@ -8,8 +8,13 @@ def DEFAULT_MIN_SDK_VERSION                 = 21
 
 buildscript {
     repositories {
+        mavenLocal()
+        maven {
+            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+            url "$rootDir/../node_modules/react-native/android"
+        }
+        google()
         jcenter()
-        google() //in newer versions of Android Studio
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.4.1'
