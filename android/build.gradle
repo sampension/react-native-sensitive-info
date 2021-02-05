@@ -15,6 +15,18 @@ buildscript {
     }
 }
 
+plugins {
+  id "org.sonarqube" version "3.1.1"
+}
+
+sonarqube {
+  properties {
+    property "sonar.projectKey", "sampension_react-native-sensitive-info"
+    property "sonar.organization", "sampension-1"
+    property "sonar.host.url", "https://sonarcloud.io"
+  }
+}
+
 android {
     compileSdkVersion project.hasProperty('compileSdkVersion') ? project.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
     buildToolsVersion project.hasProperty('buildToolsVersion') ? project.buildToolsVersion : DEFAULT_BUILD_TOOLS_VERSION
