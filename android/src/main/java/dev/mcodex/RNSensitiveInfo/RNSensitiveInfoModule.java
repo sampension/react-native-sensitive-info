@@ -51,7 +51,6 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.IvParameterSpec;
 import javax.security.auth.x500.X500Principal;
 
 import dev.mcodex.RNSensitiveInfo.utils.AppConstants;
@@ -61,19 +60,16 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
     // This must have 'AndroidKeyStore' as value. Unfortunately there is no predefined constant.
     private static final String ANDROID_KEYSTORE_PROVIDER = "AndroidKeyStore";
 
-    // This is the default transformation used throughout this sample project.
-    private static final String AES_DEFAULT_TRANSFORMATION =
-            KeyProperties.KEY_ALGORITHM_AES + "/" +
-                    KeyProperties.BLOCK_MODE_CBC + "/" +
-                    KeyProperties.ENCRYPTION_PADDING_PKCS7;
-
     private static final String AES_GCM = "AES/GCM/NoPadding";
-    private static final String RSA_ECB = "RSA/ECB/PKCS1Padding";
+    private static final String RSA_NONE = "RSA/None/OAEPWITHSHA-256ANDMGF1PADDING";
     private static final String DELIMITER = "]";
     private static final byte[] FIXED_IV = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1};
     private static final String KEY_ALIAS = "MySharedPreferenceKeyAlias";
     private static final String KEY_ALIAS_AES = "MyAesKeyAlias";
     private static final String KEY_AES_BIOMETRIC = "MyAesKeyAliasBiometric";
+
+    // This is the default transformation used throughout this sample project.
+    private static final String AES_DEFAULT_TRANSFORMATION = AES_GCM;
 
     private FingerprintManager mFingerprintManager;
     private KeyStore mKeyStore;
@@ -386,27 +382,26 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
 
         KeyGenParameterSpec.Builder builder = null;
 
-        builder.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-            .setKeySize(256)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-            // forces user authentication with fingerprint
-            .setUserAuthenticationRequired(true)
-            // We set the key to be available for 30 minutes after unlock to have the ability to write data without extra prompts
-            .setUserAuthenticationValidityDurationSeconds(60 * 30);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            builder = new KeyGenParameterSpec.Builder(
+                    KEY_ALIAS_AES,
+                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT);
 
-        keyGenerator.init(builder.build());
-        keyGenerator.generateKey();
+            builder.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                    .setKeySize(256)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                    // forces user authentication with fingerprint
+                    .setUserAuthenticationRequired(true)
+                    // We set the key to be available for 30 minutes after unlock to have the ability to write data without extra prompts
+                    .setUserAuthenticationValidityDurationSeconds(60 * 30);
 
-        // NOTE: preparing a mock key for detecting fingerprint changes
-        builder = new KeyGenParameterSpec.Builder(
-            KEY_AES_BIOMETRIC,
-            KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT);
+            keyGenerator.init(builder.build());
+            keyGenerator.generateKey();
 
-        builder.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-            .setKeySize(256)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-            // forces user authentication with fingerprint
-            .setUserAuthenticationRequired(true);
+            // NOTE: preparing a mock key for detecting fingerprint changes
+            builder = new KeyGenParameterSpec.Builder(
+                    KEY_AES_BIOMETRIC,
+                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT);
 
             builder.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
                     .setKeySize(256)
@@ -423,9 +418,8 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
             }
 
             keyGenerator.init(builder.build());
+            keyGenerator.generateKey();
         }
-
-        keyGenerator.generateKey();
     }
 
     private void putExtraWithAES(final String key, final String value, final SharedPreferences mSharedPreferences, final boolean showModal, final HashMap strings, final Promise pm) {
@@ -542,7 +536,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                     byte[] iv = Base64.decode(inputs[0], Base64.DEFAULT);
                     Cipher cipher = Cipher.getInstance(AES_DEFAULT_TRANSFORMATION);
                     SecretKey secretKeyBiometric = (SecretKey) mKeyStore.getKey(KEY_AES_BIOMETRIC, null);
-                    cipher.init(Cipher.DECRYPT_MODE, secretKeyBiometric, new IvParameterSpec(iv));
+                    cipher.init(Cipher.DECRYPT_MODE, secretKeyBiometric, new GCMParameterSpec(128, FIXED_IV));
                     showDialog(strings, new DecryptWithAesCallback(), new BiometricPrompt.CryptoObject(cipher));
                 } else {
                     byte[] iv = Base64.decode(inputs[0], Base64.DEFAULT);
@@ -552,7 +546,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                     SecretKey secretKey = (SecretKey) mKeyStore.getKey(KEY_ALIAS_AES, null);
                     Cipher cipher = Cipher.getInstance(AES_DEFAULT_TRANSFORMATION);
 
-                    cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
+                    cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(128, FIXED_IV));
 
                     SecretKeyFactory factory = SecretKeyFactory.getInstance(secretKey.getAlgorithm(), ANDROID_KEYSTORE_PROVIDER);
                     KeyInfo info = (KeyInfo) factory.getKeySpec(secretKey, KeyInfo.class);
@@ -603,7 +597,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
             c.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(128, FIXED_IV));
         } else {
             PublicKey publicKey = ((KeyStore.PrivateKeyEntry)mKeyStore.getEntry(KEY_ALIAS, null)).getCertificate().getPublicKey();
-            c = Cipher.getInstance(RSA_ECB);
+            c = Cipher.getInstance(RSA_NONE);
             c.init(Cipher.ENCRYPT_MODE, publicKey);
         }
         byte[] encodedBytes = c.doFinal(bytes);
@@ -626,7 +620,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
             c.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(128, FIXED_IV));
         } else {
             PrivateKey privateKey = ((KeyStore.PrivateKeyEntry)mKeyStore.getEntry(KEY_ALIAS, null)).getPrivateKey();
-            c = Cipher.getInstance(RSA_ECB);
+            c = Cipher.getInstance(RSA_NONE);
             c.init(Cipher.DECRYPT_MODE, privateKey);
         }
         byte[] decodedBytes = c.doFinal(Base64.decode(encrypted, Base64.DEFAULT));
