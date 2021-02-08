@@ -536,7 +536,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                     byte[] iv = Base64.decode(inputs[0], Base64.DEFAULT);
                     Cipher cipher = Cipher.getInstance(AES_DEFAULT_TRANSFORMATION);
                     SecretKey secretKeyBiometric = (SecretKey) mKeyStore.getKey(KEY_AES_BIOMETRIC, null);
-                    cipher.init(Cipher.DECRYPT_MODE, secretKeyBiometric, new GCMParameterSpec(128, FIXED_IV));
+                    cipher.init(Cipher.DECRYPT_MODE, secretKeyBiometric, new GCMParameterSpec(128, iv));
                     showDialog(strings, new DecryptWithAesCallback(), new BiometricPrompt.CryptoObject(cipher));
                 } else {
                     byte[] iv = Base64.decode(inputs[0], Base64.DEFAULT);
@@ -546,7 +546,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                     SecretKey secretKey = (SecretKey) mKeyStore.getKey(KEY_ALIAS_AES, null);
                     Cipher cipher = Cipher.getInstance(AES_DEFAULT_TRANSFORMATION);
 
-                    cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(128, FIXED_IV));
+                    cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(128, iv));
 
                     SecretKeyFactory factory = SecretKeyFactory.getInstance(secretKey.getAlgorithm(), ANDROID_KEYSTORE_PROVIDER);
                     KeyInfo info = (KeyInfo) factory.getKeySpec(secretKey, KeyInfo.class);
