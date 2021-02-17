@@ -217,12 +217,16 @@ RCT_EXPORT_METHOD(getItem:(NSString *)key options:(NSDictionary *)options resolv
                            NSData *domainState = [context evaluatedPolicyDomainState];
             
                            // check for domain state changes and not nil (in case of pincode fallback or fresh biometric setup)
-                           if (![oldDomainState isEqual:domainState] && domainState != nil && oldDomainState != nil) {
+                           if (
+                               domainState != nil && 
+                               oldDomainState != nil && 
+                               ![oldDomainState isEqual:domainState]
+                           ) {
+                                OSStatus osStatus = SecItemDelete((__bridge CFDictionaryRef) query);
                                // save the domain state that will be loaded next time
                                oldDomainState = [context evaluatedPolicyDomainState];
                                [defaults setObject:oldDomainState forKey:@"domainTouchID"];
                                // Delete key due to biometirc changes
-                               OSStatus osStatus = SecItemDelete((__bridge CFDictionaryRef) query);
                                reject(nil, @"Biometric changes", nil);
                                return;
                            }

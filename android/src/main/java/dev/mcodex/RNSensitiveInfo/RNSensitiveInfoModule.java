@@ -67,6 +67,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
     private static final String KEY_ALIAS = "MySharedPreferenceKeyAlias";
     private static final String KEY_ALIAS_AES = "MyAesKeyAlias";
     private static final String KEY_AES_BIOMETRIC = "MyAesKeyAliasBiometric";
+    private static final int GCM_TAG_LENGTH = 128;
 
     // This is the default transformation used throughout this sample project.
     private static final String AES_DEFAULT_TRANSFORMATION = AES_GCM;
@@ -536,7 +537,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                     byte[] iv = Base64.decode(inputs[0], Base64.DEFAULT);
                     Cipher cipher = Cipher.getInstance(AES_DEFAULT_TRANSFORMATION);
                     SecretKey secretKeyBiometric = (SecretKey) mKeyStore.getKey(KEY_AES_BIOMETRIC, null);
-                    cipher.init(Cipher.DECRYPT_MODE, secretKeyBiometric, new GCMParameterSpec(128, iv));
+                    cipher.init(Cipher.DECRYPT_MODE, secretKeyBiometric, new GCMParameterSpec(GCM_TAG_LENGTH, iv));
                     showDialog(strings, new DecryptWithAesCallback(), new BiometricPrompt.CryptoObject(cipher));
                 } else {
                     byte[] iv = Base64.decode(inputs[0], Base64.DEFAULT);
@@ -546,7 +547,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
                     SecretKey secretKey = (SecretKey) mKeyStore.getKey(KEY_ALIAS_AES, null);
                     Cipher cipher = Cipher.getInstance(AES_DEFAULT_TRANSFORMATION);
 
-                    cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(128, iv));
+                    cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(GCM_TAG_LENGTH, iv));
 
                     SecretKeyFactory factory = SecretKeyFactory.getInstance(secretKey.getAlgorithm(), ANDROID_KEYSTORE_PROVIDER);
                     KeyInfo info = (KeyInfo) factory.getKeySpec(secretKey, KeyInfo.class);
@@ -594,7 +595,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Key secretKey = ((KeyStore.SecretKeyEntry) mKeyStore.getEntry(KEY_ALIAS, null)).getSecretKey();
             c = Cipher.getInstance(AES_GCM);
-            c.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(128, FIXED_IV));
+            c.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(GCM_TAG_LENGTH, FIXED_IV));
         } else {
             PublicKey publicKey = ((KeyStore.PrivateKeyEntry)mKeyStore.getEntry(KEY_ALIAS, null)).getCertificate().getPublicKey();
             c = Cipher.getInstance(RSA_NONE);
@@ -617,7 +618,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Key secretKey = ((KeyStore.SecretKeyEntry) mKeyStore.getEntry(KEY_ALIAS, null)).getSecretKey();
             c = Cipher.getInstance(AES_GCM);
-            c.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(128, FIXED_IV));
+            c.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(GCM_TAG_LENGTH, FIXED_IV));
         } else {
             PrivateKey privateKey = ((KeyStore.PrivateKeyEntry)mKeyStore.getEntry(KEY_ALIAS, null)).getPrivateKey();
             c = Cipher.getInstance(RSA_NONE);
