@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
 import android.os.CancellationSignal;
-import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
@@ -15,6 +14,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.biometric.BiometricConstants;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
@@ -30,15 +30,12 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
-import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -51,7 +48,6 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
-import javax.security.auth.x500.X500Principal;
 
 import dev.mcodex.RNSensitiveInfo.utils.AppConstants;
 
@@ -94,9 +90,8 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
             e.printStackTrace();
         }
 
-        initKeyStore();
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            initKeyStore();
             try {
                 mFingerprintManager = (FingerprintManager) reactContext.getSystemService(Context.FINGERPRINT_SERVICE);
                 initFingerprintKeyStore();
@@ -134,6 +129,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void setInvalidatedByBiometricEnrollment(final boolean invalidatedByBiometricEnrollment, final Promise pm) {
         this.invalidateEnrollment = invalidatedByBiometricEnrollment;
@@ -288,34 +284,19 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
      * Generates a new RSA key and stores it under the { @code KEY_ALIAS } in the
      * Android Keystore.
      */
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void initKeyStore() {
         try {
             if (!mKeyStore.containsAlias(KEY_ALIAS)) {
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    KeyGenerator keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE_PROVIDER);
-                    keyGenerator.init(
-                            new KeyGenParameterSpec.Builder(KEY_ALIAS,
-                                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
-                                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                                .setRandomizedEncryptionRequired(false)
-                                .build());
-                    keyGenerator.generateKey();
-                } else {
-                    Calendar notBefore = Calendar.getInstance();
-                    Calendar notAfter = Calendar.getInstance();
-                    notAfter.add(Calendar.YEAR, 10);
-                    KeyPairGeneratorSpec spec = new KeyPairGeneratorSpec.Builder(getReactApplicationContext())
-                        .setAlias(KEY_ALIAS)
-                        .setSubject(new X500Principal("CN=" + KEY_ALIAS))
-                        .setSerialNumber(BigInteger.valueOf(1337))
-                        .setStartDate(notBefore.getTime())
-                        .setEndDate(notAfter.getTime())
-                        .build();
-                    KeyPairGenerator kpGenerator = KeyPairGenerator.getInstance("RSA", ANDROID_KEYSTORE_PROVIDER);
-                    kpGenerator.initialize(spec);
-                    kpGenerator.generateKeyPair();
-                }
+                KeyGenerator keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE_PROVIDER);
+                keyGenerator.init(
+                        new KeyGenParameterSpec.Builder(KEY_ALIAS,
+                            KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                            .setRandomizedEncryptionRequired(false)
+                            .build());
+                keyGenerator.generateKey();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -366,6 +347,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
      * Generates a new AES key and stores it under the { @code KEY_ALIAS_AES } in the
      * Android Keystore.
      */
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void initFingerprintKeyStore() {
         try {
             // Check if a generated key exists under the KEY_ALIAS_AES .
@@ -377,13 +359,13 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void prepareKey() throws Exception {
         KeyGenerator keyGenerator = KeyGenerator.getInstance(
                 KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE_PROVIDER);
 
         KeyGenParameterSpec.Builder builder = null;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             builder = new KeyGenParameterSpec.Builder(
                     KEY_ALIAS_AES,
                     KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT);
@@ -420,7 +402,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
 
             keyGenerator.init(builder.build());
             keyGenerator.generateKey();
-        }
+
     }
 
     private void putExtraWithAES(final String key, final String value, final SharedPreferences mSharedPreferences, final boolean showModal, final HashMap strings, final Promise pm) {
