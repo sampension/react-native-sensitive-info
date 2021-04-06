@@ -231,7 +231,7 @@ RCT_EXPORT_METHOD(getItem:(NSString *)key options:(NSDictionary *)options resolv
                                return;
                            }
 
-                           // we save the state in case of a fresh biometric setup
+                            // we save the state in case of a fresh biometric setup
                             if (oldDomainState == nil) {
                                 [defaults setObject:domainState forKey:@"domainTouchID"];
                             }
