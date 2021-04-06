@@ -1,6 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { View, Button, Alert, Text, SafeAreaView } from 'react-native';
+import { Button, Alert, Text, SafeAreaView, Platform } from 'react-native';
 import SInfo from 'react-native-sensitive-info';
+
+const isIOS = Platform.OS === 'ios';
 
 const Home: React.FC = () => {
   const handleAddUsingSetItemOnPress = useCallback(() => {
@@ -33,9 +35,15 @@ const Home: React.FC = () => {
         {
           sharedPreferencesName: 'exampleApp',
           keychainService: 'exampleApp',
-          kSecAccessControl: 'kSecAccessControlBiometryAny', // Enabling FaceID
-          touchID: true,
-          showModal: true,
+          kSecAttrAccessible: 'kSecAttrAccessibleWhenUnlockedThisDeviceOnly',
+          kSecAttrSynchronizable: false,
+          /*
+           NOTE: These options offer way more in terms of security, but we are not using
+           them because it will prompt for biometrics twice during OAuth token refresh flow
+          */
+          // kSecAccessControl: 'kSecAccessControlBiometryCurrentSet'
+          touchID: !isIOS,
+          showModal: !isIOS,
         },
       );
 
@@ -85,9 +93,30 @@ const Home: React.FC = () => {
         },
         kSecUseOperationPrompt:
           'We need your permission to retrieve encrypted data',
+        kLocalizedFallbackTitle: 'Please provide a passcode',
       });
 
       Alert.alert('Data stored', data);
+    } catch (ex) {
+      console.log(ex)
+      Alert.alert('Error', ex.message);
+    }
+  }, []);
+
+  const removeTouchIDItem = useCallback(async () => {
+    const deviceHasSensor = await SInfo.isSensorAvailable();
+
+    if (!deviceHasSensor) {
+      return Alert.alert('No sensor found');
+    }
+
+    try {
+      const data = await SInfo.deleteItem('touchIdItem', {
+        sharedPreferencesName: 'exampleApp',
+        keychainService: 'exampleApp',
+      });
+
+      Alert.alert('Item removed');
     } catch (ex) {
       Alert.alert('Error', ex.message);
     }
@@ -128,10 +157,9 @@ const Home: React.FC = () => {
         title="Add item using TouchID"
         onPress={handleSetItemUsingTouchIDOnPress}
       />
-
       <Button title="Get TouchID Data" onPress={getTouchIDItem} />
       <Button title="Has TouchID Data" onPress={hasTouchIDItem} />
-
+      <Button title="Remove TouchID Data" onPress={removeTouchIDItem} />
       <Text>{logText}</Text>
     </SafeAreaView>
   );

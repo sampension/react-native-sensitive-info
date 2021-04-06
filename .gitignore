@@ -48,3 +48,5 @@ windows/packages
 windows/RNSensitiveInfo/bin
 windows/RNSensitiveInfo/obj
 .DS_STORE
+
+.yalc/

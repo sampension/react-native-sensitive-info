@@ -119,7 +119,7 @@ RCT_EXPORT_METHOD(setItem:(NSString*)key value:(NSString*)value options:(NSDicti
     NSNumber *sync = options[@"kSecAttrSynchronizable"];
     if (sync == NULL)
         sync = (__bridge id)kSecAttrSynchronizableAny;
-
+    
     NSData* valueData = [value dataUsingEncoding:NSUTF8StringEncoding];
     NSMutableDictionary* search = [NSMutableDictionary dictionaryWithObjectsAndKeys:
                                       (__bridge id)(kSecClassGenericPassword), kSecClass,
@@ -187,7 +187,7 @@ RCT_EXPORT_METHOD(getItem:(NSString *)key options:(NSDictionary *)options resolv
         NSString *kLocalizedFallbackTitle = [RCTConvert NSString:options[@"kLocalizedFallbackTitle"]];
         context.localizedFallbackTitle = kLocalizedFallbackTitle ? kLocalizedFallbackTitle : @"";
         context.touchIDAuthenticationAllowableReuseDuration = 1;
-        
+
         [query setValue:context forKey:(NSString *)kSecUseAuthenticationContext];
         
         NSString *prompt = @"";
@@ -209,8 +209,34 @@ RCT_EXPORT_METHOD(getItem:(NSString *)key options:(NSDictionary *)options resolv
                                   }
                                   return;
                               }
-                              
-                              [self getItemWithQuery:query resolver:resolve rejecter:reject];
+            
+                           // NOTE: a workaround where we load the last domain state from touch id
+                           // to determine if the biomtric enrollment had any changes on the device
+                           NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                           NSData *oldDomainState = [defaults objectForKey:@"domainTouchID"];
+                           NSData *domainState = [context evaluatedPolicyDomainState];
+            
+                           // check for domain state changes and not nil (in case of pincode fallback or fresh biometric setup)
+                           if (
+                               domainState != nil && 
+                               oldDomainState != nil && 
+                               ![oldDomainState isEqual:domainState]
+                           ) {
+                                OSStatus osStatus = SecItemDelete((__bridge CFDictionaryRef) query);
+                               // save the domain state that will be loaded next time
+                               oldDomainState = [context evaluatedPolicyDomainState];
+                               [defaults setObject:oldDomainState forKey:@"domainTouchID"];
+                               // Delete key due to biometirc changes
+                               reject(nil, @"Biometric changes", nil);
+                               return;
+                           }
+
+                           // we save the state in case of a fresh biometric setup
+                            if (oldDomainState == nil) {
+                                [defaults setObject:domainState forKey:@"domainTouchID"];
+                            }
+
+                           [self getItemWithQuery:query resolver:resolve rejecter:reject];
                           }];
         return;
     }
@@ -241,7 +267,6 @@ RCT_EXPORT_METHOD(hasItem:(NSString *)key options:(NSDictionary *)options resolv
                                   kCFBooleanTrue, kSecReturnData,
                                   nil];
 
-    
     dispatch_async(dispatch_get_main_queue(), ^{
         if (UIApplication.sharedApplication.protectedDataAvailable) {
             // Look up server in the keychain
