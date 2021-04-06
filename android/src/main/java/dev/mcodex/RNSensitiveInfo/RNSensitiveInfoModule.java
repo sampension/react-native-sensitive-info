@@ -159,7 +159,11 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void hasEnrolledFingerprints(final Promise pm) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mFingerprintManager != null) {
+        if (mFingerprintManager == null) {
+            pm.resolve(false);
+        } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.M) {
+            pm.resolve(mFingerprintManager.isHardwareDetected() && mFingerprintManager.hasEnrolledFingerprints());
+        } else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
             pm.resolve(mFingerprintManager.hasEnrolledFingerprints());
         } else {
             pm.resolve(false);
