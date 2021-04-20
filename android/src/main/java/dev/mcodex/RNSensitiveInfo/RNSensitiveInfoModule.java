@@ -176,6 +176,13 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void hasPinCode(final Promise promise) {
+        ContentResolver cr = getContentResolver();
+        int lockPatternEnable =  Settings.Secure.getInt(cr, Settings.Secure.LOCK_PATTERN_ENABLED);
+        promise.resolve(lockPatternEnable > 0);
+    }
+
+    @ReactMethod
     public void getItem(String key, ReadableMap options, Promise pm) {
 
         String name = sharedPreferences(options);

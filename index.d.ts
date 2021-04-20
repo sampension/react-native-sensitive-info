@@ -76,3 +76,4 @@ export declare function isSensorAvailable(): Promise<
 export declare function hasEnrolledFingerprints(): Promise<boolean>;
 export declare function cancelFingerprintAuth(): void;
 export declare function setInvalidatedByBiometricEnrollment(set: boolean): void;
+export declare function hasPinCode(): Promise<boolean>;
