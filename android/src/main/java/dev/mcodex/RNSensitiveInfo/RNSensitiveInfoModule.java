@@ -184,7 +184,7 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
             int lockPatternEnable = Settings.Secure.getInt(cr, Settings.Secure.LOCK_PATTERN_ENABLED);
             promise.resolve(lockPatternEnable > 0);
         } catch (Settings.SettingNotFoundException e) {
-            promise.reject(false);
+            promise.resolve(false);
         }
     }
 
