@@ -435,7 +435,7 @@ RCT_EXPORT_METHOD(hasPinCode:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromis
 #if !TARGET_OS_TV
     LAContext *context = [[LAContext alloc] init];
     NSError *authError = nil;
-    if ([myContext canEvaluatePolicy:LAPolicyDeviceOwnerAuthentication error:&authError]) {
+    if ([context canEvaluatePolicy:LAPolicyDeviceOwnerAuthentication error:&authError]) {
         resolve(@(YES));
     } else {
         resolve(@(NO));

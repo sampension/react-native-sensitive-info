@@ -1,11 +1,13 @@
 package dev.mcodex.RNSensitiveInfo;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
 import android.os.CancellationSignal;
+import android.provider.Settings;
 import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyInfo;
@@ -177,9 +179,13 @@ public class RNSensitiveInfoModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void hasPinCode(final Promise promise) {
-        ContentResolver cr = getContentResolver();
-        int lockPatternEnable =  Settings.Secure.getInt(cr, Settings.Secure.LOCK_PATTERN_ENABLED);
-        promise.resolve(lockPatternEnable > 0);
+        try {
+            ContentResolver cr = getReactApplicationContext().getContentResolver();
+            int lockPatternEnable = Settings.Secure.getInt(cr, Settings.Secure.LOCK_PATTERN_ENABLED);
+            promise.resolve(lockPatternEnable > 0);
+        } catch (Settings.SettingNotFoundException e) {
+            promise.reject(false);
+        }
     }
 
     @ReactMethod

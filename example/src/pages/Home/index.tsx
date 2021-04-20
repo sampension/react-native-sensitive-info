@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { Button, Alert, Text, SafeAreaView, Platform } from 'react-native';
-import SInfo from 'react-native-sensitive-info';
+import SInfo from '@sampension/react-native-sensitive-info';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -73,7 +73,7 @@ const Home: React.FC = () => {
     try {
       const hasPin = await SInfo.hasPinCode();
 
-      Alert.alert(hasPin ? 'Item is present' : 'item is not present');
+      Alert.alert(hasPin ? 'Pin is set' : 'Pin is not set');
     } catch (ex) {
       Alert.alert('Error', ex.message);
     }
