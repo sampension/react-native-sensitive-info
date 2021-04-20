@@ -1,9 +1,10 @@
 {
   "version": "v1",
   "packages": {
-    "react-native-sensitive-info": {
-      "signature": "6bfcbcd659f5cf3568862ad3a3551636",
-      "file": true
+    "@sampension/react-native-sensitive-info": {
+      "signature": "51abb29cc7359ffeb022c94eb2a23a67",
+      "file": true,
+      "replaced": "file:.yalc/react-native-sensitive-info"
     }
   }
 }

@@ -429,4 +429,19 @@ RCT_EXPORT_METHOD(isSensorAvailable:(RCTPromiseResolveBlock)resolve rejecter:(RC
   resolve(@(NO));
 #endif
 }
+
+RCT_EXPORT_METHOD(hasPinCode:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+{
+#if !TARGET_OS_TV
+    LAContext *context = [[LAContext alloc] init];
+    NSError *authError = nil;
+    if ([context canEvaluatePolicy:LAPolicyDeviceOwnerAuthentication error:&authError]) {
+        resolve(@(YES));
+    } else {
+        resolve(@(NO));
+    }
+#else
+  resolve(@(NO));
+#endif
+}
 @end
